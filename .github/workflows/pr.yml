@@ -16,8 +16,8 @@ jobs:
       with:
         go-version: 1.18
 
-    - name: Format
-      run: gofmt -l -s **/*.go
+    - name: Ensure style
+      run: test -z $(gofmt -l -s **/*.go)
 
     - name: Test
       run: go test -v ./...
