@@ -15,7 +15,7 @@ $ go get -u github.com/gideaworx/go-encoding/urlvalues
 PRs are welcome. Please [open an issue](./issues/new) first so it can be triaged and discussed. Make sure you
 follow the [Code of Conduct](./CODE-OF-CONDUCT.md) guidelines.
 
-Make sure all PRs have corresponding [Ginkgo](https://onsi.github.io/ginkgo/) tests, and are formatted using `gofmt`.
+Make sure all PRs have corresponding [Ginkgo](https://onsi.github.io/ginkgo/) tests, and are formatted using `gofmt -s`.
 PRs that do not have these will be rejected.
 
 ### License
