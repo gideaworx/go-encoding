@@ -44,7 +44,7 @@ type URLValuesMarshaler interface {
 // 			mySecretValue: false,
 // 		}
 //
-// url.MarshalURLValues(myExample) will return a url.Values instance whose Encode() method would return
+// urlvalues.MarshalURLValues(myExample) will return a url.Values instance whose Encode() method would return
 //
 //		"mystring=value1&slice=1.2&slice=3.4&slice=5.6&time=2022-07-03T12%3A22%3A09Z&ID=0"
 //

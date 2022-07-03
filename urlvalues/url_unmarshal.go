@@ -20,16 +20,21 @@ type URLValuesUnmarshaler interface {
 // is a *map[string]any, each map key is the name of the parameter, and each map value s will be deserialized in the
 // following way (and in the following order):
 //
-// if s can be parsed as a bool, it will return a bool
-// if s can be parsed as a real number, it will return a float64
-// if s can be parsed as a complex number, it will return a complex128
-// if s can be parsed as an RFC3339 timestamp, it will return a time.Time
-// if none of the above are true, s will be return unparsed
+// * if s can be parsed as a bool, it will return a bool
+//
+// * if s can be parsed as a real number, it will return a float64
+//
+// * if s can be parsed as a complex number, it will return a complex128
+//
+// * if s can be parsed as an RFC3339 timestamp, it will return a time.Time
+//
+// * if none of the above are true, s will be return unparsed
 //
 // if a parameter has multiple values, the map key will contain an instance of []any with each slice element parsed
 // according to the above rules. If the argument is a *struct, each parameter will be deserialized, if possible,
 // to the corresponding struct field's type, using the field's "url" struct tag to map the parameter name to field
-// name, if present. Unexported fields and fields with struct tag `url:"-"` are skipped.
+// name, if present. Unexported fields and fields with struct tag `url:"-"` are skipped. If the struct tag ends in
+// ',omitempty' and the value is the type's zero value, it will not be explicitly set.
 func UnmarshalURLValues(values url.Values, a any) error {
 	if a == nil {
 		return errors.New("second argument must not be nil")
