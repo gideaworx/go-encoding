@@ -1,4 +1,4 @@
-module github.com/gideaworx/go-encoding/urlvalues
+module github.com/gideaworx/go-encoding
 
 go 1.18
 

@@ -1,13 +1,13 @@
-# `github.com/gideaworx/go-encoding/urlvalues`
+# `github.com/gideaworx/go-encoding`
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/gideaworx/go-encoding/urlvalues.svg)](https://pkg.go.dev/github.com/gideaworx/go-encoding/urlvalues)
+[![Go Reference](https://pkg.go.dev/badge/github.com/gideaworx/go-encoding.svg)](https://pkg.go.dev/github.com/gideaworx/go-encoding)
 
 This readme is a work in progress.
 
 ### Installing
 
 ```sh
-$ go get -u github.com/gideaworx/go-encoding/urlvalues
+$ go get -u github.com/gideaworx/go-encoding
 ```
 
 ### Contributing
