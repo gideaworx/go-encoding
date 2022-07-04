@@ -112,7 +112,7 @@ func setValueFromMap(vals *url.Values, key string, val any) error {
 
 	if rv.Kind() == reflect.Array || rv.Kind() == reflect.Slice {
 		for i := 0; i < rv.Len(); i++ {
-			s, err := stringFromValue(rv.Index(i), rv.Index(i).Type())
+			s, err := stringFromValue(rv.Index(i), rv.Index(i).Type(), "")
 			if err != nil {
 				return err
 			}
@@ -156,6 +156,11 @@ func setValuesFromStruct(values *url.Values, a any) error {
 			key = tag
 		}
 
+		format, ok := sf.Tag.Lookup("urlformat")
+		if !ok {
+			format = ""
+		}
+
 		if !fv.IsValid() || (fv.IsZero() && omit) {
 			continue
 		}
@@ -173,7 +178,7 @@ func setValuesFromStruct(values *url.Values, a any) error {
 			}
 
 			for j := 0; j < fv.Len(); j++ {
-				str, err := stringFromValue(fv.Index(j), fv.Index(j).Type())
+				str, err := stringFromValue(fv.Index(j), fv.Index(j).Type(), format)
 				if err != nil {
 					if errors.Is(err, errSkip) {
 						continue
@@ -187,7 +192,7 @@ func setValuesFromStruct(values *url.Values, a any) error {
 			continue
 		}
 
-		str, err := stringFromValue(fv, sf.Type)
+		str, err := stringFromValue(fv, sf.Type, format)
 		if err != nil {
 			if errors.Is(err, errSkip) {
 				continue
@@ -218,6 +223,8 @@ func stringFromConcrete(a any) (string, error) {
 		return big.NewFloat(float64(concrete)).String(), nil
 	case float64:
 		return big.NewFloat(concrete).String(), nil
+	case time.Duration:
+		return concrete.String(), nil
 	case int, uint, int8, uint8, int16, uint16, int32, uint32, int64, uint64:
 		return fmt.Sprintf("%d", concrete), nil
 	case string:
@@ -228,10 +235,10 @@ func stringFromConcrete(a any) (string, error) {
 		return concrete.Error(), nil
 	}
 
-	return stringFromValue(reflect.ValueOf(a), reflect.TypeOf(a))
+	return stringFromValue(reflect.ValueOf(a), reflect.TypeOf(a), "")
 }
 
-func stringFromValue(v reflect.Value, t reflect.Type) (string, error) {
+func stringFromValue(v reflect.Value, t reflect.Type, format string) (string, error) {
 	if !v.IsValid() {
 		if t.Kind() == reflect.Pointer {
 			v = reflect.New(t.Elem())
@@ -240,8 +247,10 @@ func stringFromValue(v reflect.Value, t reflect.Type) (string, error) {
 		}
 	}
 
-	if v.IsZero() {
-		return zeroValue(t)
+	if t.Kind() == reflect.Pointer || t.Kind() == reflect.Slice || t.Kind() == reflect.Array {
+		if v.IsZero() {
+			return zeroValue(t)
+		}
 	}
 
 	if v.Kind() == reflect.Pointer {
@@ -252,32 +261,127 @@ func stringFromValue(v reflect.Value, t reflect.Type) (string, error) {
 		v = v.Elem()
 	}
 
+	i := v.Interface()
+	if t, ok := i.(time.Time); ok {
+		if format != "" {
+			return t.Format(format), nil
+		}
+		return t.Format(time.RFC3339), nil
+	}
+
+	if d, ok := i.(time.Duration); ok {
+		if format != "" {
+			parts := strings.Split(format, ",")
+			if !strings.EqualFold(parts[0], "int") {
+				return d.String(), nil
+			}
+
+			unit := time.Nanosecond
+			if len(parts) > 1 {
+				switch parts[1] {
+				case "us":
+					unit = time.Microsecond
+				case "ms":
+					unit = time.Millisecond
+				case "s":
+					unit = time.Second
+				case "m":
+					unit = time.Minute
+				case "h":
+					unit = time.Hour
+				}
+
+				return fmt.Sprintf("%d", int64(d/unit)), nil
+			}
+		}
+
+		return d.String(), nil
+	}
+
+	if e, ok := i.(error); ok {
+		return e.Error(), nil
+	}
+
 	switch v.Kind() {
 	case reflect.Bool:
-		return strconv.FormatBool(v.Bool()), nil
+		b := v.Bool()
+		switch strings.ToLower(format) {
+		case "int":
+			if b {
+				return "1", nil
+			}
+			return "0", nil
+		case "shortlower":
+			if b {
+				return "t", nil
+			}
+			return "f", nil
+		case "short":
+			if b {
+				return "T", nil
+			}
+			return "F", nil
+		case "upper":
+			if b {
+				return "TRUE", nil
+			}
+			return "FALSE", nil
+		case "camel":
+			if b {
+				return "True", nil
+			}
+			return "False", nil
+		case "lower":
+			fallthrough
+		default:
+			return strconv.FormatBool(b), nil
+		}
 	case reflect.Complex64:
-		return strconv.FormatComplex(v.Complex(), 'f', -1, 64), nil
+		var f byte = 'f'
+		if format != "" {
+			f = format[0]
+			if f != 'e' && f != 'E' && f != 'f' && f != 'g' && f != 'G' {
+				return "", fmt.Errorf("bad verb %s. only e, E, f, g, and G are currently supported", string(format[0]))
+			}
+		}
+		str := strconv.FormatComplex(v.Complex(), f, -1, 64)
+		return str, nil
 	case reflect.Complex128:
-		return strconv.FormatComplex(v.Complex(), 'f', -1, 128), nil
+		var f byte = 'f'
+		if format != "" {
+			f = format[0]
+			if f != 'e' && f != 'E' && f != 'f' && f != 'g' && f != 'G' {
+				return "", fmt.Errorf("bad verb %s. only e, E, f, g, and G are currently supported", string(format[0]))
+			}
+		}
+		str := strconv.FormatComplex(v.Complex(), f, -1, 128)
+		return str, nil
 	case reflect.Float32:
-		return strconv.FormatFloat(v.Float(), 'f', -1, 32), nil
+		var f byte = 'f'
+		if format != "" {
+			f = format[0]
+			if f != 'e' && f != 'E' && f != 'f' && f != 'g' && f != 'G' {
+				return "", fmt.Errorf("bad verb %s. only e, E, f, g, and G are currently supported", string(format[0]))
+			}
+		}
+		str := strconv.FormatFloat(v.Float(), f, -1, 32)
+		return str, nil
 	case reflect.Float64:
-		return strconv.FormatFloat(v.Float(), 'f', -1, 64), nil
+		var f byte = 'f'
+		if format != "" {
+			f = format[0]
+			if f != 'e' && f != 'E' && f != 'f' && f != 'g' && f != 'G' {
+				return "", fmt.Errorf("bad verb %s. only e, E, f, g, and G are currently supported", string(format[0]))
+			}
+		}
+		str := strconv.FormatFloat(v.Float(), f, -1, 64)
+		return str, nil
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		return fmt.Sprintf("%d", v.Int()), nil
 	case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
 		return fmt.Sprintf("%d", v.Uint()), nil
 	case reflect.String:
 		return v.String(), nil
-	}
-
-	i := v.Interface()
-	if t, ok := i.(time.Time); ok {
-		return t.Format(time.RFC3339), nil
-	}
-
-	if e, ok := i.(error); ok {
-		return e.Error(), nil
 	}
 
 	return "", fmt.Errorf("unsupported type %T", v.Interface())

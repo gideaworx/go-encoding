@@ -11,53 +11,6 @@ import (
 	. "github.com/onsi/gomega"
 )
 
-type custom struct {
-	v url.Values
-}
-
-func (c custom) MarshalURLValues() (url.Values, error) {
-	return c.v, nil
-}
-
-func (c *custom) UnmarshalURLValues(v url.Values) error {
-	c.v = v
-	return nil
-}
-
-const staticTimestamp = 1613642160
-
-type aBitOfEverythingValid struct {
-	BoolVal       bool       `url:"bo"`
-	ByteVal       byte       `url:"by"`
-	Complex64Val  complex64  `url:"c64"`
-	Complex128Val complex128 `url:"c128"`
-	Float32Val    float32    `url:"f32"`
-	Float64Val    float64    `url:"f64"`
-	IntVal        int        `url:"i"`
-	Int8Val       int8       `url:"i8"`
-	Int16Val      int16      `url:"i16"`
-	Int32Val      int32      `url:"i32"`
-	Int64Val      int64      `url:"i64"`
-	RuneVal       rune       `url:"r"`
-	StringVal     string     `url:"str"`
-	UintVal       uint       `url:"ui"`
-	Uint8Val      uint8      `url:"ui8"`
-	Uint16Val     uint16     `url:"ui16"`
-	Uint32Val     uint32     `url:"ui32"`
-	Uint64Val     uint64     `url:"ui64"`
-	TimeVal       time.Time  `url:"t"`
-	ArrayVal      [3]int     `url:"a"`
-	SliceVal      []string   `url:"s"`
-	StringPtr     *string    `url:"strp"`
-	SlicePtr      *[]int     `url:"sp"`
-	SliceOfPtrs   []*string  `url:"sop"`
-	ErrorVal      error      `url:"e"`
-	OmitEmptyVal  int        `url:"o,omitempty"`
-	SkipVal       bool       `url:"-"`
-	NoTags        int
-	unexported    string
-}
-
 var _ = Describe("URL Values Marshaling and Unmarshaling", func() {
 	expectedEverythingVals := url.Values{}
 	expectedEverythingVals.Set("bo", "false")
@@ -95,6 +48,34 @@ var _ = Describe("URL Values Marshaling and Unmarshaling", func() {
 
 	strPtr := "ptr"
 	slicePtr := []int{-3, -2, -1}
+
+	boolTest := boolFormat{
+		false, false, false, false, false, false, false,
+		true, true, true, true, true, true, true,
+	}
+
+	durationTest := durationFormat{
+		testDur, testDur, testDur, testDur, testDur, testDur, testDur,
+	}
+
+	numberTest := fcFormat{
+		xf32, xf32, xf32, xf32, xf32,
+		nf32, nf32, nf32, nf32, nf32,
+		xf64, xf64, xf64, xf64, xf64,
+		nf64, nf64, nf64, nf64, nf64,
+		xc64, xc64, xc64, xc64, xc64,
+		nc64, nc64, nc64, nc64, nc64,
+		xc128, xc128, xc128, xc128, xc128,
+		nc128, nc128, nc128, nc128, nc128,
+	}
+
+	encodedBool :=
+		"FalseCamel=False&FalseDefault=false&FalseInt=0&FalseLower=false&FalseShort=F&FalseShortLower=f&FalseUpper=FALSE&" +
+			"TrueCamel=True&TrueDefault=true&TrueInt=1&TrueLower=true&TrueShort=T&TrueShortLower=t&TrueUpper=TRUE"
+
+	encodedDur := "d=1m0s&h=0&m=1&ms=60000&ns=60000000000&s=60&us=60000000"
+
+	encodedNums := "C128MaxE=%281.7976931348623157E%2B308%2B1.7976931348623157E%2B308i%29&C128MaxG=%281.7976931348623157E%2B308%2B1.7976931348623157E%2B308i%29&C128Maxe=%281.7976931348623157e%2B308%2B1.7976931348623157e%2B308i%29&C128Maxf=%28179769313486231570000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000%2B179769313486231570000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000i%29&C128Maxg=%281.7976931348623157e%2B308%2B1.7976931348623157e%2B308i%29&C128MinE=%285E-324%2B5E-324i%29&C128MinG=%285E-324%2B5E-324i%29&C128Mine=%285e-324%2B5e-324i%29&C128Minf=%280.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005%2B0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005i%29&C128Ming=%285e-324%2B5e-324i%29&C64MaxE=%283.4028235E%2B38%2B3.4028235E%2B38i%29&C64MaxG=%283.4028235E%2B38%2B3.4028235E%2B38i%29&C64Maxe=%283.4028235e%2B38%2B3.4028235e%2B38i%29&C64Maxf=%28340282350000000000000000000000000000000%2B340282350000000000000000000000000000000i%29&C64Maxg=%283.4028235e%2B38%2B3.4028235e%2B38i%29&C64MinE=%281E-45%2B1E-45i%29&C64MinG=%281E-45%2B1E-45i%29&C64Mine=%281e-45%2B1e-45i%29&C64Minf=%280.000000000000000000000000000000000000000000001%2B0.000000000000000000000000000000000000000000001i%29&C64Ming=%281e-45%2B1e-45i%29&F32MaxE=3.4028235E%2B38&F32MaxG=3.4028235E%2B38&F32Maxe=3.4028235e%2B38&F32Maxf=340282350000000000000000000000000000000&F32Maxg=3.4028235e%2B38&F32MinE=1E-45&F32MinG=1E-45&F32Mine=1e-45&F32Minf=0.000000000000000000000000000000000000000000001&F32Ming=1e-45&F64MaxE=1.7976931348623157E%2B308&F64MaxG=1.7976931348623157E%2B308&F64Maxe=1.7976931348623157e%2B308&F64Maxf=179769313486231570000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000&F64Maxg=1.7976931348623157e%2B308&F64MinE=5E-324&F64MinG=5E-324&F64Mine=5e-324&F64Minf=0.000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005&F64Ming=5e-324"
 
 	var a aBitOfEverythingValid
 	BeforeEach(func() {
@@ -205,6 +186,29 @@ var _ = Describe("URL Values Marshaling and Unmarshaling", func() {
 				Expect(err).To(HaveOccurred())
 			})
 		})
+
+		Describe("Formats", func() {
+			It("Marshals Bools properly", func() {
+				vals, err := urlvalues.MarshalURLValues(boolTest)
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(vals.Encode()).To(Equal(encodedBool))
+			})
+
+			It("Marshals Durations properly", func() {
+				vals, err := urlvalues.MarshalURLValues(durationTest)
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(vals.Encode()).To(Equal(encodedDur))
+			})
+
+			It("Marshals Floats and Complexes properly", func() {
+				vals, err := urlvalues.MarshalURLValues(numberTest)
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(vals.Encode()).To(Equal(encodedNums))
+			})
+		})
 	})
 
 	Describe("Unmarshaling", func() {
@@ -259,6 +263,61 @@ var _ = Describe("URL Values Marshaling and Unmarshaling", func() {
 				err := urlvalues.UnmarshalURLValues(vals, &c)
 				Expect(err).NotTo(HaveOccurred())
 				Expect(c.v).To(Equal(vals))
+			})
+		})
+
+		Describe("Formatting", func() {
+			It("Unmarshals Bools properly", func() {
+				vals, err := url.ParseQuery(encodedBool)
+				Expect(err).NotTo(HaveOccurred())
+
+				var b boolFormat
+				err = urlvalues.UnmarshalURLValues(vals, &b)
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(b).To(BeEquivalentTo(boolTest))
+			})
+
+			It("Unmarshals Durations properly", func() {
+				vals, err := url.ParseQuery(encodedDur)
+				Expect(err).NotTo(HaveOccurred())
+
+				var d durationFormat
+				err = urlvalues.UnmarshalURLValues(vals, &d)
+
+				// reset it here since it marshals to 0, since it was set to 1 minute
+				durationTest.Hour = 0
+
+				Expect(err).NotTo(HaveOccurred())
+				Expect(d).To(BeEquivalentTo(durationTest))
+			})
+
+			It("Unmarshals floats and complexes as best as it can", func() {
+				s := struct {
+					D  float64    `url:"d" urlformat:"G"`
+					F  float32    `url:"f" urlformat:"f"`
+					BC complex128 `url:"bc" urlformat:"g"`
+					SC complex64  `url:"sc" urlformat:"f"`
+				}{
+					xf64, 38_000_000_004.32, complex(nf64, nf64), (3.4 + 2.8e-7i),
+				}
+
+				x := struct {
+					D  float64    `url:"d" urlformat:"E"`
+					F  float32    `url:"f" urlformat:"f"`
+					BC complex128 `url:"bc" urlformat:"g"`
+					SC complex64  `url:"sc" urlformat:"f"`
+				}{}
+
+				v := url.Values{}
+				v.Add("d", "1.7976931348623157E+308")
+				v.Add("f", "38000000004.32")
+				v.Add("bc", "(5e-324+5e-324i)")
+				v.Add("sc", "(3.4+0.00000028i)")
+
+				err := urlvalues.UnmarshalURLValues(v, &x)
+				Expect(err).NotTo(HaveOccurred())
+				Expect(x).To(BeEquivalentTo(s))
 			})
 		})
 

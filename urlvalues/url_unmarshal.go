@@ -107,11 +107,16 @@ func unmarshalStruct(values url.Values, structType reflect.Type) (reflect.Value,
 			}
 		}
 
+		format, ok := structField.Tag.Lookup("urlformat")
+		if !ok {
+			format = ""
+		}
+
 		if !values.Has(parameterName) {
 			continue
 		}
 
-		parsedValue, err := fromStringsToValue(values[parameterName], structField.Type)
+		parsedValue, err := fromStringsToValue(values[parameterName], structField.Type, format)
 		if err != nil {
 			return parsedValue, err
 		}
@@ -159,7 +164,7 @@ func fromStringToAny(s string) any {
 	return s
 }
 
-func fromStringsToValue(values []string, fieldType reflect.Type) (reflect.Value, error) {
+func fromStringsToValue(values []string, fieldType reflect.Type, format string) (reflect.Value, error) {
 	var retVal reflect.Value
 
 	if len(values) == 0 {
@@ -188,7 +193,7 @@ func fromStringsToValue(values []string, fieldType reflect.Type) (reflect.Value,
 		checkRetLen := retVal.Elem().Kind() == reflect.Array
 		for i := 0; i < len(values) && (!checkRetLen || i < retVal.Elem().Len()); i++ {
 			// the first Elem returns the value of the pointer, the second returns the underlying type of the iterable
-			v, err := fromStringToValue(values[i], retVal.Elem().Type().Elem())
+			v, err := fromStringToValue(values[i], retVal.Elem().Type().Elem(), format)
 			if err != nil {
 				return reflect.Zero(retVal.Elem().Type()), err
 			}
@@ -212,7 +217,7 @@ func fromStringsToValue(values []string, fieldType reflect.Type) (reflect.Value,
 	} else if retVal.Elem().Kind() == reflect.String {
 		retVal.Elem().Set(reflect.ValueOf(values[0]))
 	} else {
-		v, err := fromStringToValue(values[0], retVal.Elem().Type())
+		v, err := fromStringToValue(values[0], retVal.Elem().Type(), format)
 		if err != nil {
 			return reflect.Zero(retVal.Elem().Type()), err
 		}
@@ -235,7 +240,47 @@ func fromStringsToValue(values []string, fieldType reflect.Type) (reflect.Value,
 	return retVal.Elem(), nil
 }
 
-func fromStringToValue(s string, t reflect.Type) (reflect.Value, error) {
+func fromStringToValue(s string, t reflect.Type, format string) (reflect.Value, error) {
+	// handle durations first, since it's an alias for int64 and would be picked up by the switch
+	durationType := reflect.TypeOf((*time.Duration)(nil)).Elem()
+	if t == durationType {
+		var d time.Duration
+		var err error
+
+		parts := strings.Split(format, ",")
+		if !strings.EqualFold(parts[0], "int") {
+			d, err = time.ParseDuration(s)
+			return reflect.ValueOf(d), err
+		}
+
+		v, err := strconv.ParseInt(s, 10, 64)
+		if err != nil {
+			return reflect.ValueOf(v), err
+		}
+
+		unit := time.Nanosecond
+		if len(parts) > 1 {
+			switch parts[1] {
+			case "us":
+				unit = time.Microsecond
+			case "ms":
+				unit = time.Millisecond
+			case "s":
+				unit = time.Second
+			case "m":
+				unit = time.Minute
+			case "h":
+				unit = time.Hour
+			}
+
+			if d = time.Duration(v); d == 0 {
+				return reflect.ValueOf(d), nil
+			}
+
+			return reflect.ValueOf(d * unit), nil
+		}
+	}
+
 	switch t.Kind() {
 	case reflect.String:
 		return reflect.ValueOf(s), nil
@@ -245,21 +290,21 @@ func fromStringToValue(s string, t reflect.Type) (reflect.Value, error) {
 	case reflect.Complex128:
 		v, err := strconv.ParseComplex(s, 128)
 		return reflect.ValueOf(v), err
+	case reflect.Complex64:
+		v, err := strconv.ParseComplex(s, 64)
+		return reflect.ValueOf(complex64(v)), err
 	case reflect.Float64:
 		v, err := strconv.ParseFloat(s, 64)
 		return reflect.ValueOf(v), err
+	case reflect.Float32:
+		v, err := strconv.ParseFloat(s, 32)
+		return reflect.ValueOf(float32(v)), err
 	case reflect.Int64:
 		v, err := strconv.ParseInt(s, 10, 64)
 		return reflect.ValueOf(v), err
 	case reflect.Uint64:
 		v, err := strconv.ParseUint(s, 10, 64)
 		return reflect.ValueOf(v), err
-	case reflect.Complex64:
-		v, err := strconv.ParseComplex(s, 64)
-		return reflect.ValueOf(complex64(v)), err
-	case reflect.Float32:
-		v, err := strconv.ParseFloat(s, 32)
-		return reflect.ValueOf(float32(v)), err
 	case reflect.Int:
 		v, err := strconv.Atoi(s)
 		return reflect.ValueOf(v), err
@@ -285,7 +330,7 @@ func fromStringToValue(s string, t reflect.Type) (reflect.Value, error) {
 		v, err := strconv.ParseUint(s, 10, 32)
 		return reflect.ValueOf(uint32(v)), err
 	case reflect.Pointer:
-		v, err := fromStringToValue(s, t.Elem())
+		v, err := fromStringToValue(s, t.Elem(), format)
 		if err != nil {
 			return reflect.Zero(t), err
 		}
@@ -296,7 +341,7 @@ func fromStringToValue(s string, t reflect.Type) (reflect.Value, error) {
 		return vPtr, nil
 	}
 
-	timeType := reflect.TypeOf(time.Time{})
+	timeType := reflect.TypeOf((*time.Time)(nil)).Elem()
 	if t.AssignableTo(timeType) {
 		ts, err := time.Parse(time.RFC3339, s)
 		return reflect.ValueOf(ts), err
