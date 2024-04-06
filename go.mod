@@ -1,4 +1,4 @@
-module github.com/gideaworx/go-encoding
+module go.gideaworx.io/go-encoding
 
 go 1.18
 

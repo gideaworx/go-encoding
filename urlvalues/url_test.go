@@ -6,9 +6,9 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/gideaworx/go-encoding/urlvalues"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
+	"go.gideaworx.io/go-encoding/urlvalues"
 )
 
 var _ = Describe("URL Values Marshaling and Unmarshaling", func() {
