@@ -1,4 +1,4 @@
-package urlvalues
+package urlvalues // import "go.gideaworx.io/go-encoding/urlvalues"
 
 import (
 	"errors"

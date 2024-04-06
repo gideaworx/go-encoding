@@ -1,4 +1,4 @@
-package urlvalues
+package urlvalues // import "go.gideaworx.io/go-encoding/urlvalues"
 
 import (
 	"errors"
@@ -24,29 +24,29 @@ type URLValuesMarshaler interface {
 // i must be a struct, map[string]any, URLValuesMarshaler or a pointer thereto. If using a struct, the
 // value names can be controlled by the "url" struct tag. For example, given the struct
 //
-//		type Example struct {
-//			MyStringValue  string    `url:"mystring"`
-//			MySkippedValue any	     `url:"-"`
-//			MyOmittedValue *int64    `url:"intptr,omitempty"`
-//			MyTime         time.Time `url:"time"`
-//			SomeSlice	   []float64 `url:"slice,omitempty"`
-//			ID             int8
-//			mySecretValue  bool
-//		}
+//	type Example struct {
+//		MyStringValue  string    `url:"mystring"`
+//		MySkippedValue any	     `url:"-"`
+//		MyOmittedValue *int64    `url:"intptr,omitempty"`
+//		MyTime         time.Time `url:"time"`
+//		SomeSlice	   []float64 `url:"slice,omitempty"`
+//		ID             int8
+//		mySecretValue  bool
+//	}
 //
 // and an instance
 //
-//		myExample := Example{
-// 			MyStringValue: "value1",
-// 			MySkippedValue: complex64(3+2i),
-// 			MyTime: time.Now().UTC(),
-//			SomeSlice: []float64{1.2, 3.4, 5.6},
-// 			mySecretValue: false,
-// 		}
+//	myExample := Example{
+//		MyStringValue: "value1",
+//		MySkippedValue: complex64(3+2i),
+//		MyTime: time.Now().UTC(),
+//		SomeSlice: []float64{1.2, 3.4, 5.6},
+//		mySecretValue: false,
+//	}
 //
 // urlvalues.MarshalURLValues(myExample) will return a url.Values instance whose Encode() method would return
 //
-//		"mystring=value1&slice=1.2&slice=3.4&slice=5.6&time=2022-07-03T12%3A22%3A09Z&ID=0"
+//	"mystring=value1&slice=1.2&slice=3.4&slice=5.6&time=2022-07-03T12%3A22%3A09Z&ID=0"
 //
 // time.Time objects will be formatted in RFC3339 format, and error instances will be serialized by calling their
 // Error() method. See the unit tests for deeper examples.
