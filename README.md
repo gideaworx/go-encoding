@@ -1,13 +1,13 @@
-# `github.com/gideaworx/go-encoding`
+# `go.gideaworx.io/go-encoding`
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/gideaworx/go-encoding.svg)](https://pkg.go.dev/github.com/gideaworx/go-encoding)
+[![Go Reference](https://pkg.go.dev/badge/go.gideaworx.io/go-encoding.svg)](https://pkg.go.dev/go.gideaworx.io/go-encoding)
 
 This readme is a work in progress.
 
 ### Installing
 
 ```sh
-$ go get -u github.com/gideaworx/go-encoding
+$ go get -u go.gideaworx.io/go-encoding
 ```
 
 ### Contributing
