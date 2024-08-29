@@ -150,7 +150,7 @@ func setValuesFromStruct(values *url.Values, a any) error {
 		join := ""
 		tagString, ok := sf.Tag.Lookup("url")
 		if ok {
-			tag, err := ParseTag(tagString)
+			tag, err := parseTag(tagString)
 			if err != nil {
 				if errors.Is(err, errSkip) {
 					continue
