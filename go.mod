@@ -1,6 +1,6 @@
 module go.gideaworx.io/go-encoding
 
-go 1.18
+go 1.23.0
 
 require (
 	github.com/onsi/ginkgo/v2 v2.1.4

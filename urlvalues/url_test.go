@@ -43,6 +43,11 @@ var _ = Describe("URL Values Marshaling and Unmarshaling", func() {
 	expectedEverythingVals.Add("sp", "-1")
 	expectedEverythingVals.Add("sop", "ptr")
 	expectedEverythingVals.Add("sop", "ptr")
+	expectedEverythingVals.Add("j", "hello, world")
+	expectedEverythingVals.Add("jnc", "1X2X3")
+	expectedEverythingVals.Add("jmc", "1.1a,b,c2.2a,b,c3.3")
+	expectedEverythingVals.Add("jes", "a")
+	expectedEverythingVals.Add("jes", "b")
 	expectedEverythingVals.Add("NoTags", "0")
 	expectedEverythingVals.Set("e", "some error")
 
@@ -80,31 +85,35 @@ var _ = Describe("URL Values Marshaling and Unmarshaling", func() {
 	var a aBitOfEverythingValid
 	BeforeEach(func() {
 		a = aBitOfEverythingValid{
-			unexported:    "hi",
-			ByteVal:       'a',
-			Complex64Val:  2i,
-			Complex128Val: 3 + 598i,
-			Float32Val:    3.5,
-			Float64Val:    math.Pow(2, 33),
-			IntVal:        1,
-			Int8Val:       8,
-			Int16Val:      16,
-			Int32Val:      32,
-			Int64Val:      64,
-			RuneVal:       '😬',
-			StringVal:     "string",
-			UintVal:       2,
-			Uint8Val:      9,
-			Uint16Val:     17,
-			Uint32Val:     33,
-			Uint64Val:     65,
-			TimeVal:       time.Unix(staticTimestamp, 0).UTC(),
-			ArrayVal:      [3]int{1, 2, 3},
-			SliceVal:      []string{"x", "y", "z"},
-			SlicePtr:      &slicePtr,
-			SliceOfPtrs:   []*string{&strPtr, &strPtr},
-			ErrorVal:      errors.New("some error"),
-			SkipVal:       true,
+			unexported:     "hi",
+			ByteVal:        'a',
+			Complex64Val:   2i,
+			Complex128Val:  3 + 598i,
+			Float32Val:     3.5,
+			Float64Val:     math.Pow(2, 33),
+			IntVal:         1,
+			Int8Val:        8,
+			Int16Val:       16,
+			Int32Val:       32,
+			Int64Val:       64,
+			RuneVal:        '😬',
+			StringVal:      "string",
+			UintVal:        2,
+			Uint8Val:       9,
+			Uint16Val:      17,
+			Uint32Val:      33,
+			Uint64Val:      65,
+			TimeVal:        time.Unix(staticTimestamp, 0).UTC(),
+			ArrayVal:       [3]int{1, 2, 3},
+			SliceVal:       []string{"x", "y", "z"},
+			SlicePtr:       &slicePtr,
+			SliceOfPtrs:    []*string{&strPtr, &strPtr},
+			ErrorVal:       errors.New("some error"),
+			JoinedSlice:    []string{"hello", "world"},
+			JoinNoComma:    []int{1, 2, 3},
+			JoinMultiComma: []float64{1.1, 2.2, 3.3},
+			JoinEmptyStr:   []string{"a", "b"},
+			SkipVal:        true,
 		}
 	})
 

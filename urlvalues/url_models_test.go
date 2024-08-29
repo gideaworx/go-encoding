@@ -22,35 +22,39 @@ func (c *custom) UnmarshalURLValues(v url.Values) error {
 const staticTimestamp = 1613642160
 
 type aBitOfEverythingValid struct {
-	BoolVal       bool       `url:"bo"`
-	ByteVal       byte       `url:"by"`
-	Complex64Val  complex64  `url:"c64"`
-	Complex128Val complex128 `url:"c128"`
-	Float32Val    float32    `url:"f32"`
-	Float64Val    float64    `url:"f64"`
-	IntVal        int        `url:"i"`
-	Int8Val       int8       `url:"i8"`
-	Int16Val      int16      `url:"i16"`
-	Int32Val      int32      `url:"i32"`
-	Int64Val      int64      `url:"i64"`
-	RuneVal       rune       `url:"r"`
-	StringVal     string     `url:"str"`
-	UintVal       uint       `url:"ui"`
-	Uint8Val      uint8      `url:"ui8"`
-	Uint16Val     uint16     `url:"ui16"`
-	Uint32Val     uint32     `url:"ui32"`
-	Uint64Val     uint64     `url:"ui64"`
-	TimeVal       time.Time  `url:"t"`
-	ArrayVal      [3]int     `url:"a"`
-	SliceVal      []string   `url:"s"`
-	StringPtr     *string    `url:"strp"`
-	SlicePtr      *[]int     `url:"sp"`
-	SliceOfPtrs   []*string  `url:"sop"`
-	ErrorVal      error      `url:"e"`
-	OmitEmptyVal  int        `url:"o,omitempty"`
-	SkipVal       bool       `url:"-"`
-	NoTags        int
-	unexported    string
+	BoolVal        bool       `url:"bo"`
+	ByteVal        byte       `url:"by"`
+	Complex64Val   complex64  `url:"c64"`
+	Complex128Val  complex128 `url:"c128"`
+	Float32Val     float32    `url:"f32"`
+	Float64Val     float64    `url:"f64"`
+	IntVal         int        `url:"i"`
+	Int8Val        int8       `url:"i8"`
+	Int16Val       int16      `url:"i16"`
+	Int32Val       int32      `url:"i32"`
+	Int64Val       int64      `url:"i64"`
+	RuneVal        rune       `url:"r"`
+	StringVal      string     `url:"str"`
+	UintVal        uint       `url:"ui"`
+	Uint8Val       uint8      `url:"ui8"`
+	Uint16Val      uint16     `url:"ui16"`
+	Uint32Val      uint32     `url:"ui32"`
+	Uint64Val      uint64     `url:"ui64"`
+	TimeVal        time.Time  `url:"t"`
+	ArrayVal       [3]int     `url:"a"`
+	SliceVal       []string   `url:"s"`
+	StringPtr      *string    `url:"strp"`
+	SlicePtr       *[]int     `url:"sp"`
+	SliceOfPtrs    []*string  `url:"sop"`
+	JoinedSlice    []string   `url:"j,join=', '"`
+	JoinNoComma    []int      `url:"jnc,join='X'"`
+	JoinMultiComma []float64  `url:"jmc,join='a,b,c'"`
+	JoinEmptyStr   []string   `url:"jes,join=''"`
+	ErrorVal       error      `url:"e"`
+	OmitEmptyVal   int        `url:"o,omitempty"`
+	SkipVal        bool       `url:"-"`
+	NoTags         int
+	unexported     string
 }
 
 type boolFormat struct {

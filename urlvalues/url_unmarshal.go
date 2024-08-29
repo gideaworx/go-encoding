@@ -98,13 +98,21 @@ func unmarshalStruct(values url.Values, structType reflect.Type) (reflect.Value,
 
 		parameterName := structField.Name
 		omitEmpty := false
-		if tag, ok := structField.Tag.Lookup("url"); ok {
-			omitEmpty = strings.HasSuffix(tag, ",omitempty")
-			parameterName = strings.TrimSuffix(tag, ",omitempty")
+		join := ""
+		tagString, ok := structField.Tag.Lookup("url")
+		if ok {
+			tag, err := ParseTag(tagString)
+			if err != nil {
+				if errors.Is(err, errSkip) {
+					continue
+				}
 
-			if parameterName == "-" {
-				continue
+				return reflect.Zero(structType), err
 			}
+
+			parameterName = tag.name
+			join = tag.joinString
+			omitEmpty = tag.omitEmpty
 		}
 
 		format, ok := structField.Tag.Lookup("urlformat")
@@ -116,7 +124,7 @@ func unmarshalStruct(values url.Values, structType reflect.Type) (reflect.Value,
 			continue
 		}
 
-		parsedValue, err := fromStringsToValue(values[parameterName], structField.Type, format)
+		parsedValue, err := fromStringsToValue(values[parameterName], structField.Type, format, join)
 		if err != nil {
 			return parsedValue, err
 		}
@@ -164,7 +172,7 @@ func fromStringToAny(s string) any {
 	return s
 }
 
-func fromStringsToValue(values []string, fieldType reflect.Type, format string) (reflect.Value, error) {
+func fromStringsToValue(values []string, fieldType reflect.Type, format string, join string) (reflect.Value, error) {
 	var retVal reflect.Value
 
 	if len(values) == 0 {
@@ -179,6 +187,11 @@ func fromStringsToValue(values []string, fieldType reflect.Type, format string) 
 		isPointerType = true
 		retType = fieldType.Elem()
 		retVal = reflect.New(fieldType.Elem())
+	}
+
+	if (retType.Kind() == reflect.Slice || retType.Kind() == reflect.Array) &&
+		len(values) == 1 && join != "" {
+		values = strings.Split(values[0], join)
 	}
 
 	if retType.Kind() == reflect.Slice {

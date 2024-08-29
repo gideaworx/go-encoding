@@ -24,29 +24,31 @@ type URLValuesMarshaler interface {
 // i must be a struct, map[string]any, URLValuesMarshaler or a pointer thereto. If using a struct, the
 // value names can be controlled by the "url" struct tag. For example, given the struct
 //
-//	type Example struct {
-//		MyStringValue  string    `url:"mystring"`
-//		MySkippedValue any	     `url:"-"`
-//		MyOmittedValue *int64    `url:"intptr,omitempty"`
-//		MyTime         time.Time `url:"time"`
-//		SomeSlice	   []float64 `url:"slice,omitempty"`
-//		ID             int8
-//		mySecretValue  bool
-//	}
+//		type Example struct {
+//			MyStringValue  string    `url:"mystring"`
+//			MySkippedValue any	     `url:"-"`
+//			MyOmittedValue *int64    `url:"intptr,omitempty"`
+//			MyTime         time.Time `url:"time"`
+//			SomeSlice	   []float64 `url:"slice,omitempty"`
+//	     	SomeJoinedSlice []string `url:"joined,join=', '`
+//			ID             int8
+//			mySecretValue  bool
+//		}
 //
 // and an instance
 //
-//	myExample := Example{
-//		MyStringValue: "value1",
-//		MySkippedValue: complex64(3+2i),
-//		MyTime: time.Now().UTC(),
-//		SomeSlice: []float64{1.2, 3.4, 5.6},
-//		mySecretValue: false,
-//	}
+//		myExample := Example{
+//			MyStringValue: "value1",
+//			MySkippedValue: complex64(3+2i),
+//			MyTime: time.Now().UTC(),
+//			SomeSlice: []float64{1.2, 3.4, 5.6},
+//	     	SomeJoinedSlice: []string{"hello", "world"}
+//			mySecretValue: false,
+//		}
 //
 // urlvalues.MarshalURLValues(myExample) will return a url.Values instance whose Encode() method would return
 //
-//	"mystring=value1&slice=1.2&slice=3.4&slice=5.6&time=2022-07-03T12%3A22%3A09Z&ID=0"
+//	"mystring=value1&slice=1.2&slice=3.4&slice=5.6&joined=hello%2C%20world&time=2022-07-03T12%3A22%3A09Z&ID=0"
 //
 // time.Time objects will be formatted in RFC3339 format, and error instances will be serialized by calling their
 // Error() method. See the unit tests for deeper examples.
@@ -145,15 +147,21 @@ func setValuesFromStruct(values *url.Values, a any) error {
 
 		key := sf.Name
 		omit := false
-		tag, ok := sf.Tag.Lookup("url")
+		join := ""
+		tagString, ok := sf.Tag.Lookup("url")
 		if ok {
-			omit = strings.HasSuffix(tag, ",omitempty")
-			tag = strings.TrimSuffix(tag, ",omitempty")
-			if tag == "-" {
-				continue
+			tag, err := ParseTag(tagString)
+			if err != nil {
+				if errors.Is(err, errSkip) {
+					continue
+				}
+
+				return err
 			}
 
-			key = tag
+			key = tag.name
+			join = tag.joinString
+			omit = tag.omitEmpty
 		}
 
 		format, ok := sf.Tag.Lookup("urlformat")
@@ -177,6 +185,7 @@ func setValuesFromStruct(values *url.Values, a any) error {
 				continue
 			}
 
+			valueStrings := make([]string, 0, fv.Len())
 			for j := 0; j < fv.Len(); j++ {
 				str, err := stringFromValue(fv.Index(j), fv.Index(j).Type(), format)
 				if err != nil {
@@ -186,7 +195,16 @@ func setValuesFromStruct(values *url.Values, a any) error {
 					return err
 				}
 
-				values.Add(key, str)
+				if join == "" {
+					values.Add(key, str)
+					continue
+				}
+
+				valueStrings = append(valueStrings, str)
+			}
+
+			if len(valueStrings) > 0 {
+				values.Set(key, strings.Join(valueStrings, join))
 			}
 
 			continue
