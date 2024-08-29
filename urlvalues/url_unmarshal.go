@@ -101,7 +101,7 @@ func unmarshalStruct(values url.Values, structType reflect.Type) (reflect.Value,
 		join := ""
 		tagString, ok := structField.Tag.Lookup("url")
 		if ok {
-			tag, err := ParseTag(tagString)
+			tag, err := parseTag(tagString)
 			if err != nil {
 				if errors.Is(err, errSkip) {
 					continue

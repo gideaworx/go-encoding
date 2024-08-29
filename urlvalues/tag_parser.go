@@ -19,7 +19,7 @@ func strSliceCheck(expectedValue string) func(string) bool {
 	}
 }
 
-func ParseTag(tag string) (*urlValueTag, error) {
+func parseTag(tag string) (*urlValueTag, error) {
 	if tag == "-" {
 		return nil, errSkip
 	}
